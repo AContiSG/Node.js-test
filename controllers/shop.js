@@ -2,21 +2,24 @@ const Product = require("../models/product");
 const Cart = require("../models/cart");
 
 exports.getProducts = (req, res, next) => {
-    Product.fetchAll().then(([rows, fieldData]) => {
-        res.render("shop/product-list", {
-            prods: rows,
-            pageTitle: "All Products",
-            path: "/products",
-        });
-    });
+    Product.findAll()
+        .then((products) => {
+            res.render("shop/product-list", {
+                prods: products,
+                pageTitle: "All Products",
+                path: "/products",
+            });
+        })
+        .catch((err) => console.log(err));
 };
 
 exports.getProduct = (req, res, next) => {
     const prodId = req.params.productId;
-    Product.findById(prodId)
-        .then(([product]) => {
+    Product.findAll();
+    Product.findByPk(prodId)
+        .then((product) => {
             res.render("shop/product-detail", {
-                product: product[0],
+                product: product,
                 pageTitle: product.title,
                 path: "/products",
             });
@@ -25,10 +28,10 @@ exports.getProduct = (req, res, next) => {
 };
 
 exports.getIndex = (req, res, next) => {
-    Product.fetchAll()
-        .then(([rows, fieldData]) => {
+    Product.findAll()
+        .then((products) => {
             res.render("shop/index", {
-                prods: rows,
+                prods: products,
                 pageTitle: "Shop",
                 path: "/",
             });
@@ -62,7 +65,7 @@ exports.getCart = (req, res, next) => {
 
 exports.postCart = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.findById(prodId, (product) => {
+    Product.findByPk(prodId, (product) => {
         Cart.addProduct(prodId, product.price);
     });
     res.redirect("/cart");
@@ -70,7 +73,7 @@ exports.postCart = (req, res, next) => {
 
 exports.postCartDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.findById(prodId, (product) => {
+    Product.findByPk(prodId, (product) => {
         Cart.deleteProduct(prodId, product.price);
         res.redirect("/cart");
     });

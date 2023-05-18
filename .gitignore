@@ -1,3 +1,4 @@
 node_modules
 data
 util/database.js
+jsconfig.json
