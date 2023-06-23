@@ -3,8 +3,8 @@ const mongodb = require("mongodb");
 const { use } = require("../routes/admin");
 
 class User {
-    constructor(user, email, cart, id) {
-        this.user = user;
+    constructor(username, email, cart, id) {
+        this.name = username;
         this.email = email;
         this.cart = cart;
         this._id = id;
@@ -72,6 +72,38 @@ class User {
                 { _id: new mongodb.ObjectId(this._id) },
                 { $set: { cart: { items: updatedCartItems } } }
             );
+    }
+
+    addOrder() {
+        const db = getDb();
+        return this.getCart()
+            .then((products) => {
+                const order = {
+                    items: products,
+                    user: {
+                        _id: new mongodb.ObjectId(this._id),
+                        name: this.name,
+                    },
+                };
+                return db.collection("orders").insertOne(order);
+            })
+            .then((result) => {
+                this.cart = { items: [] };
+                return db
+                    .collection("users")
+                    .updateOne(
+                        { _id: new mongodb.ObjectId(this._id) },
+                        { $set: { cart: { items: [] } } }
+                    );
+            });
+    }
+
+    getOrders() {
+        const db = getDb();
+        return db
+            .collection("orders")
+            .find({ "user._id": new mongodb.ObjectId(this._id) })
+            .toArray();
     }
 
     static findById(userId) {
