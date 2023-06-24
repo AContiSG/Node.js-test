@@ -1,4 +1,4 @@
-const getDb = require("../util/database").getDb;
+// const getDb = require("../util/database").getDb;
 const mongodb = require("mongodb");
 const { use } = require("../routes/admin");
 
