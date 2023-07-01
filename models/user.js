@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
-    name: { type: String, required: true },
     email: { type: String, required: true },
+    password: { type: String, required: true },
     cart: {
         items: [
             {
@@ -55,49 +55,3 @@ userSchema.methods.clearCart = function () {
 };
 
 module.exports = mongoose.model("User", userSchema);
-
-//     addOrder() {
-//         const db = getDb();
-//         return this.getCart()
-//             .then((products) => {
-//                 const order = {
-//                     items: products,
-//                     user: {
-//                         _id: new mongodb.ObjectId(this._id),
-//                         name: this.name,
-//                     },
-//                 };
-//                 return db.collection("orders").insertOne(order);
-//             })
-//             .then((result) => {
-//                 this.cart = { items: [] };
-//                 return db
-//                     .collection("users")
-//                     .updateOne(
-//                         { _id: new mongodb.ObjectId(this._id) },
-//                         { $set: { cart: { items: [] } } }
-//                     );
-//             });
-//     }
-
-//     getOrders() {
-//         const db = getDb();
-//         return db
-//             .collection("orders")
-//             .find({ "user._id": new mongodb.ObjectId(this._id) })
-//             .toArray();
-//     }
-
-//     static findById(userId) {
-//         const db = getDb();
-//         return db
-//             .collection("users")
-//             .findOne({ _id: new mongodb.ObjectId(userId) })
-//             .then((user) => {
-//                 return user;
-//             })
-//             .catch((err) => console.log(err));
-//     }
-// }
-
-// module.exports = User;
