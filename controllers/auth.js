@@ -1,5 +1,16 @@
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
+
 const User = require("../models/user");
+
+const transporter = nodemailer.createTransport({
+    host: "smtp.ethereal.email",
+    port: 587,
+    auth: {
+        user: "jordon.durgan@ethereal.email",
+        pass: "gECkx16tV5J1AjTJrj",
+    },
+});
 
 exports.getLogin = (req, res, next) => {
     let message = req.flash("error");
@@ -83,6 +94,24 @@ exports.postSignup = (req, res, next) => {
                     return user.save();
                 })
                 .then((result) => {
+                    transporter.sendMail(
+                        {
+                            from: "shop@node-test.com",
+                            to: email,
+                            subject: "Signup complete",
+                            text: "Signup succeded",
+                            html: "<b>Hey there! </b><br> This is our first message sent with Nodemailer<br />",
+                        },
+                        (error, info) => {
+                            if (error) {
+                                return console.log(error);
+                            }
+                            // console.log(
+                            //     "Message sent: %s",
+                            //     info.messageId
+                            // );
+                        }
+                    );
                     res.redirect("/login");
                 });
         })
