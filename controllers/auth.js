@@ -2,9 +2,9 @@ const crypto = require("crypto");
 
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
+const { validationResult } = require("express-validator");
 
 const User = require("../models/user");
-const { use } = require("../routes/admin");
 
 const transporter = nodemailer.createTransport({
     host: "smtp.ethereal.email",
@@ -39,7 +39,6 @@ exports.getSignup = (req, res, next) => {
     res.render("auth/signup", {
         path: "/signup",
         pageTitle: "Signup",
-        isAuthenticated: false,
         errorMessage: message,
     });
 };
@@ -79,43 +78,41 @@ exports.postSignup = (req, res, next) => {
     const email = req.body.email;
     const password = req.body.password;
     const confirmPassword = req.body.confirmPassword;
-    User.findOne({ email: email })
-        .then((userDoc) => {
-            if (userDoc) {
-                req.flash("error", "Email alredy exist");
-                return res.redirect("/signup");
-            }
-            return bcrypt
-                .hash(password, 12)
-                .then((hashedPassword) => {
-                    const user = new User({
-                        email: email,
-                        password: hashedPassword,
-                        cart: { items: [] },
-                    });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        // console.log(errors.array());
+        return res.status(422).render("auth/signup", {
+            path: "/signup",
+            pageTitle: "Signup",
+            errorMessage: errors.array()[0].msg,
+        });
+    }
+    bcrypt
+        .hash(password, 12)
+        .then((hashedPassword) => {
+            const user = new User({
+                email: email,
+                password: hashedPassword,
+                cart: { items: [] },
+            });
 
-                    return user.save();
-                })
-                .then((result) => {
-                    transporter.sendMail(
-                        {
-                            from: "shop@node-test.com",
-                            to: email,
-                            subject: "Signup complete",
-                            text: "Signup succeded",
-                        },
-                        (error, info) => {
-                            if (error) {
-                                return console.log(error);
-                            }
-                            // console.log(
-                            //     "Message sent: %s",
-                            //     info.messageId
-                            // );
-                        }
-                    );
-                    res.redirect("/login");
-                });
+            return user.save();
+        })
+        .then((result) => {
+            transporter.sendMail(
+                {
+                    from: "shop@node-test.com",
+                    to: email,
+                    subject: "Signup complete",
+                    text: "Signup succeded",
+                },
+                (error, info) => {
+                    if (error) {
+                        return console.log(error);
+                    }
+                }
+            );
+            res.redirect("/login");
         })
         .catch((err) => console.log(err));
 };
@@ -137,7 +134,6 @@ exports.getReset = (req, res, next) => {
     res.render("auth/reset", {
         path: "/reset",
         pageTitle: "Reset Password",
-        isAuthenticated: false,
         errorMessage: message,
     });
 };
@@ -190,7 +186,6 @@ exports.getNewPassword = (req, res, next) => {
             res.render("auth/new-password", {
                 path: "/new-password",
                 pageTitle: "New Password",
-                isAuthenticated: false,
                 errorMessage: message,
                 userId: user._id.toString(),
                 passwordToken: token,
