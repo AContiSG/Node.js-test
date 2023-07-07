@@ -8,7 +8,23 @@ const router = express.Router();
 
 router.get("/login", authController.getLogin);
 
-router.post("/login", authController.postLogin);
+router.post(
+    "/login",
+    [
+        body("email")
+            .isEmail()
+            .withMessage("Please enter a valid email")
+            .normalizeEmail(),
+        body(
+            "password",
+            "Please enter a password with only numbers and letter with at least 5 characters"
+        )
+            .isLength({ min: 5 })
+            .isAlphanumeric()
+            .trim(),
+    ],
+    authController.postLogin
+);
 
 router.post("/logout", authController.postLogout);
 
@@ -26,19 +42,23 @@ router.post(
                         return Promise.reject("Email alredy exist");
                     }
                 });
-            }),
+            })
+            .normalizeEmail(),
         body(
             "password",
             "Please enter a password with only numbers and letter with at least 5 characters"
         )
             .isLength({ min: 5 })
-            .isAlphanumeric(),
-        body("confirmPassword").custom((value, { req }) => {
-            if (value !== req.body.password) {
-                throw new Error("Passwords have to match.");
-            }
-            return true;
-        }),
+            .isAlphanumeric()
+            .trim(),
+        body("confirmPassword")
+            .trim()
+            .custom((value, { req }) => {
+                if (value !== req.body.password) {
+                    throw new Error("Passwords have to match.");
+                }
+                return true;
+            }),
     ],
     authController.postSignup
 );

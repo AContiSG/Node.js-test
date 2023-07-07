@@ -13,7 +13,7 @@ const errorController = require("./controllers/error");
 const User = require("./models/user");
 
 const { csrfSynchronisedProtection } = csrf.csrfSync({
-    getTokenFromRequest: (req) => req.body["CSRFToken"],
+    getTokenFromRequest: (req) => req.body["_csrf"],
 });
 
 const app = express();
