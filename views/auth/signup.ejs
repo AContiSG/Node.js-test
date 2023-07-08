@@ -14,7 +14,7 @@
             <div class="form-control">
                 <label for="email">E-Mail</label>
                 <input 
-                    class="<%= validationErrors.find(e=>{ return e.path ==='email'}) ? 'invalid' : '' %>"  
+                    class="<%= validationErrors.find(e => e.path === 'email') ? 'invalid' : '' %>"
                     type="email" 
                     name="email" 
                     id="email" 
