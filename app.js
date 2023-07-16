@@ -14,7 +14,15 @@ const errorController = require("./controllers/error");
 const User = require("./models/user");
 
 const { csrfSynchronisedProtection } = csrf.csrfSync({
-    getTokenFromRequest: (req) => req.body["_csrf"],
+    getTokenFromRequest: (req) => {
+        // If NOT delete/get request, we have a body
+        // to retrieve the token from
+        if (!/get|delete/i.test(req.method)) {
+            return req.body["_csrf"];
+        }
+        // get/delete request, get csrf from headers
+        return req.headers["csrf-token"];
+    },
 });
 
 const app = express();
