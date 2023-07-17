@@ -1,5 +1,8 @@
 const fs = require("fs");
 const path = require("path");
+require("dotenv").config();
+
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const PDFDocument = require("pdfkit");
 
@@ -136,20 +139,50 @@ exports.postCartDeleteProduct = (req, res, next) => {
 };
 
 exports.getCheckout = (req, res, next) => {
+    let products;
+    let total = 0;
     req.user
         .populate("cart.items.productId")
         .then((user) => {
-            const products = user.cart.items;
-            let total = 0;
+            products = user.cart.items;
+            total = 0;
             products.forEach((p) => {
                 total += p.quantity * p.productId.price;
             });
-
+            return stripe.checkout.sessions.create({
+                payment_method_types: ["card"],
+                mode: "payment",
+                line_items: products.map((p) => {
+                    return {
+                        quantity: p.quantity,
+                        price_data: {
+                            currency: "ars",
+                            unit_amount: p.productId.price * 100,
+                            product_data: {
+                                name: p.productId.title,
+                                description: p.productId.description,
+                            },
+                        },
+                    };
+                }),
+                customer_email: req.user.email,
+                success_url:
+                    req.protocol +
+                    "://" +
+                    req.get("host") +
+                    "/checkout/success",
+                cancel_url:
+                    req.protocol + "://" + req.get("host") + "/checkout/cancel",
+            });
+        })
+        .then((session) => {
             res.render("shop/checkout", {
                 path: "/checkout",
                 pageTitle: "Checkout",
                 products: products,
                 totalSum: total,
+                sessionId: session.id,
+                publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
             });
         })
         .catch((err) => {
@@ -159,7 +192,36 @@ exports.getCheckout = (req, res, next) => {
         });
 };
 
-exports.postOrder = (req, res, next) => {
+// exports.postOrder = (req, res, next) => {
+//     req.user
+//         .populate("cart.items.productId")
+//         .then((user) => {
+//             const products = user.cart.items.map((i) => {
+//                 return {
+//                     quantity: i.quantity,
+//                     product: { ...i.productId.toJSON() },
+//                 };
+//             });
+//             const order = new Order({
+//                 user: { email: req.user.email, userId: req.user },
+//                 products: products,
+//             });
+//             return order.save();
+//         })
+//         .then((result) => {
+//             return req.user.clearCart();
+//         })
+//         .then((result) => {
+//             res.redirect("/orders");
+//         })
+//         .catch((err) => {
+//             const error = new Error(err);
+//             error.httpStatusCode = 500;
+//             return next(error);
+//         });
+// };
+
+exports.getCheckoutSuccess = (req, res, next) => {
     req.user
         .populate("cart.items.productId")
         .then((user) => {
